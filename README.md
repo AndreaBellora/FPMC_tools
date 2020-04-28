@@ -9,11 +9,13 @@ bash setupFPMC.sh
 ```
 to clone the FPMC repository and automatically build FPMC
 
+Use:
 ```
 ./runFPMC.py <datacard>
 ```
 runs the simulation of the process specified by <datacard> 
-  
+
+Use:  
 ```
 ./run_with_GLU_NU.py <datacard> <glu_nu>
 ```
