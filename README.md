@@ -5,7 +5,7 @@ Tested on CERN lxplus (CC7)
 
 Use:
 ```
-source setupFPMC.sh
+bash setupFPMC.sh
 ```
 to clone the FPMC repository and automatically build FPMC
 
