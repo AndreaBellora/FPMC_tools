@@ -1,0 +1,17 @@
+OUTPUTLHE   1
+LHEFILE     'incl_Ttbar_QCD.lhe'
+IPROC       11706
+TYPINT      'QCD'
+NFLUX       9
+MAXEV       10000
+TYPEPR      'INC'
+ECMS        14000.
+ISOFTM      1
+EMMIN       10
+YJMAX       2.5.
+YJMIN      -2.5
+PTMIN       20.
+YWWMIN      0.015
+YWWMAX      0.15
+SURV		0.06
+HADR        'N'
