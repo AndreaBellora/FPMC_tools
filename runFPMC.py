@@ -7,20 +7,20 @@ fpmc_build_folder = "./FPMC/build/"
 CMSSW_folder = "./FPMC/CMSSW_10_6_10/"
 fpmc_source_folder = "./FPMC/fpmc/"
 
-saveLHEFile=True
+saveLHEFile=False
 
-def runFPMC(datacard):
+def runFPMC(datacard ="", fpmc_output=True):
 
 	def print_and_run(command):
 		print(command)
-		os.system(command)
+		subprocess.call(command, shell=True)
 
 	if not os.path.exists(datacard):
 		print("ERROR: Missing datacard!")
 		sys.exit(1)
 
 	# Create the new directory for logging the simulation
-	os.system("mkdir -p LOG")
+	subprocess.call("mkdir -p LOG", shell=True)
 	logfolder_dirs = [int(i) for i in os.listdir(path="LOG")]
 	if logfolder_dirs == []:
 		newdir = 1
@@ -32,7 +32,10 @@ def runFPMC(datacard):
 	setenv_command = "cd "+CMSSW_folder+"src; eval `scramv1 runtime -sh`; cd -"
 	fpmc_command = "./"+fpmc_build_folder+"fpmc-lhe < "+datacard+" | tee out_tmp"
 	print("Executing: \n"+setenv_command+"\n"+fpmc_command)
-	os.system(setenv_command+";"+fpmc_command)
+	if fpmc_output:
+		subprocess.call(setenv_command+";"+fpmc_command, shell=True)
+	else:
+		subprocess.call(setenv_command+";"+fpmc_command, shell=True, stdout=subprocess.DEVNULL)
 
 	# Save summary in the log file
 	datacard = subprocess.getoutput("cat "+datacard)
@@ -51,19 +54,20 @@ def runFPMC(datacard):
 
 
 	# Save the LHE file if needed
+	with open("Datacards/incl_Ttbar_QCD") as datacard:
+		for line in datacard: 
+			if line.startswith("LHEFILE"):
+				lhe_filename = line.split()[1]
 	if saveLHEFile:
 		os.system("mkdir -p LHE")
-		with open("Datacards/incl_Ttbar_QCD") as datacard:
-			for line in datacard: 
-				if line.startswith("LHEFILE"):
-					lhe_filename = line.split()[1]
-
 		print_and_run("mkdir -p LHE/"+str(newdir))
-		os.system("mv "+lhe_filename+" LHE/"+str(newdir)+"/")
+		subprocess.call("mv "+lhe_filename+" LHE/"+str(newdir)+"/", shell=True)
 		print("LHE file saved in: LHE/"+str(newdir)+"/"+lhe_filename)
+	else:
+		subprocess.call("rm "+lhe_filename, shell=True)
 
 	# clean outputs
-	os.system("rm out_tmp")
+	subprocess.call("rm out_tmp", shell=True)
 	print("Summary saved in: " + summaryFileName)
 
 
