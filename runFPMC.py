@@ -3,13 +3,31 @@ import os
 import sys
 import subprocess
 
-fpmc_build_folder = "./FPMC/build/"
+fpmc_build_folder = "./FPMC/build_ttbar/"
 CMSSW_folder = "./FPMC/CMSSW_10_6_10/"
 fpmc_source_folder = "./FPMC/fpmc/"
+madgraph_folder = "/eos/home-a/abellora/SWAN_projects/TopPheno/MadGraph/MG5_aMC_v3_1_0/"
+delphes_datacard = "Delphes/cards/delphes_card_CMS.tcl"
+work_folder = os.getcwd()+"/"
 
-saveLHEFile=False
-
-def runFPMC(datacard ="", fpmc_output=True):
+def runFPMC(datacard ="", fpmc_output=True, LHE_output=False, ROOT_output=False, Delphes_output=False):
+	if type(fpmc_output) == str:
+		if fpmc_output.lower() == "true":
+			fpmc_output = True
+		else:
+			fpmc_output = False
+		if LHE_output.lower() == "true":
+			LHE_output = True
+		else:
+			LHE_output = False
+		if ROOT_output.lower() == "true":
+			ROOT_output = True
+		else:
+			ROOT_output = False
+		if Delphes_output.lower() == "true":
+			Delphes_output = True
+		else:
+			Delphes_output = False
 
 	def print_and_run(command):
 		print(command)
@@ -30,7 +48,7 @@ def runFPMC(datacard ="", fpmc_output=True):
 
 	# Set environment for fpmc & run the simulation
 	setenv_command = "cd "+CMSSW_folder+"src; eval `scramv1 runtime -sh`; cd -"
-	fpmc_command = "./"+fpmc_build_folder+"fpmc-lhe < "+datacard+" | tee out_tmp"
+	fpmc_command = "cd "+fpmc_build_folder+"; ./fpmc-lhe < "+work_folder+datacard+" | tee "+work_folder+"out_tmp; cd -"
 	print("Executing: \n"+setenv_command+"\n"+fpmc_command)
 	if fpmc_output:
 		subprocess.call(setenv_command+";"+fpmc_command, shell=True)
@@ -38,33 +56,59 @@ def runFPMC(datacard ="", fpmc_output=True):
 		subprocess.call(setenv_command+";"+fpmc_command, shell=True, stdout=subprocess.DEVNULL)
 
 	# Save summary in the log file
-	datacard = subprocess.getoutput("cat "+datacard)
+	datacard_content = subprocess.getoutput("cat "+datacard)
 	glu_nu = subprocess.getoutput("grep -m 1 'GLU_NU=' "+fpmc_source_folder+"/Fpmc/External/pdf/h1qcd.f | sed 's/d/e/'").lstrip()
 	glu_nu = glu_nu.replace("=","      ")
 	final_summary = subprocess.getoutput("tail --lines=1 out_tmp")
 	summaryFileName = "LOG/"+str(newdir)+"/Summary.txt"
 	with open(summaryFileName, "w+") as summary_file:
 		summary_file.write("*******************************DATACARD*******************************\n")
-		summary_file.write(datacard)
+		summary_file.write(datacard_content)
 		summary_file.write("\n********************************GLU_NU********************************\n")
 		summary_file.write(glu_nu)	
 		summary_file.write("\n********************************RESULT********************************\n")
 		summary_file.write(final_summary)
 		summary_file.write("\n**********************************************************************\n")
 
-
+	lhe_filename = ""
 	# Save the LHE file if needed
-	with open("Datacards/incl_Ttbar_QCD") as datacard:
-		for line in datacard: 
+	with open(datacard) as dc:
+		for line in dc: 
 			if line.startswith("LHEFILE"):
 				lhe_filename = line.split()[1]
-	if saveLHEFile:
-		os.system("mkdir -p LHE")
-		print_and_run("mkdir -p LHE/"+str(newdir))
-		subprocess.call("mv "+lhe_filename+" LHE/"+str(newdir)+"/", shell=True)
-		print("LHE file saved in: LHE/"+str(newdir)+"/"+lhe_filename)
+				lhe_filename = lhe_filename.replace("'", "")
+	if lhe_filename == "":
+		print("No LHE file name found in datacard!")
+		sys.exit(1)
+
+	lhe_filepath = "LHE/"+str(newdir)+"/"+lhe_filename
+	root_filename = os.path.splitext(lhe_filename)[0]+".root"
+	root_filepath = "ROOT/"+str(newdir)+"/"+root_filename
+	delphes_filepath = "DELPHES/"+str(newdir)+"/"+root_filename
+
+	print_and_run("mkdir -p LHE")
+	print_and_run("mkdir -p LHE/"+str(newdir))
+	print_and_run("mv "+fpmc_build_folder+lhe_filename+" "+lhe_filepath)
+	
+	# Convert LHE to ROOT file format
+	if ROOT_output:
+		print_and_run("mkdir -p ROOT")
+		print_and_run("mkdir -p ROOT/"+str(newdir))
+		print_and_run(setenv_command+";"+madgraph_folder+"ExRootAnalysis/ExRootLHEFConverter "+lhe_filepath+" "+root_filepath)
+		print("ROOT file saved in: "+root_filepath)
+
+	# Run Delphes on the LHE file
+	if Delphes_output:
+		setDelphesEnv = "source /cvmfs/sft.cern.ch/lcg/views/LCG_99/x86_64-centos7-gcc10-opt/setup.sh"
+		print_and_run("mkdir -p DELPHES/"+str(newdir))
+		print_and_run(setDelphesEnv+";"+madgraph_folder+"Delphes/DelphesLHEF "+madgraph_folder+delphes_datacard+" "+delphes_filepath+" "+lhe_filepath)		
+		print("Delphes output file saved in: "+delphes_filepath)
+		
+	if not LHE_output:
+		subprocess.call("rm -r LHE/"+str(newdir),shell=True)
 	else:
-		subprocess.call("rm "+lhe_filename, shell=True)
+		print("LHE file saved in: "+lhe_filepath)
+
 
 	# clean outputs
 	subprocess.call("rm out_tmp", shell=True)
@@ -72,4 +116,4 @@ def runFPMC(datacard ="", fpmc_output=True):
 
 
 if __name__ == "__main__":
-    runFPMC(sys.argv[1])
+    runFPMC(*sys.argv[1:])

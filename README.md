@@ -20,3 +20,7 @@ Use:
 ./run_with_GLU_NU.py <datacard> <glu_nu>
 ```
 runs the simulation of the process specified by <datacard> input and <glu_nu> value
+
+# For MadGraph
+Setup with 'source /cvmfs/sft.cern.ch/lcg/views/LCG_99/x86_64-centos7-gcc10-opt/setup.sh'
+Install pythia, install Delphes separately -> copied DelphesHEPMC2 in DelphesHEPMC
