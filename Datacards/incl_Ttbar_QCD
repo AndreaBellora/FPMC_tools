@@ -14,4 +14,6 @@ PTMIN       20.
 YWWMIN      0.015
 YWWMAX      0.15
 SURV		0.06
-HADR        'N'
+HADR        'Y'
+NRN1		42
+NRN2		2

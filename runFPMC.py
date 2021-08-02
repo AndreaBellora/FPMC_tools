@@ -10,7 +10,7 @@ madgraph_folder = "/eos/home-a/abellora/SWAN_projects/TopPheno/MadGraph/MG5_aMC_
 delphes_datacard = "Delphes/cards/delphes_card_CMS.tcl"
 work_folder = os.getcwd()+"/"
 
-def runFPMC(datacard ="", fpmc_output=True, LHE_output=False, ROOT_output=False, Delphes_output=False):
+def runFPMC(datacard ="", fpmc_output=True, LHE_output=False, ROOT_output=False, Delphes_output=False,seed=42,sampleID=""):
 	if type(fpmc_output) == str:
 		if fpmc_output.lower() == "true":
 			fpmc_output = True
@@ -40,15 +40,30 @@ def runFPMC(datacard ="", fpmc_output=True, LHE_output=False, ROOT_output=False,
 	# Create the new directory for logging the simulation
 	subprocess.call("mkdir -p LOG", shell=True)
 	logfolder_dirs = [int(i) for i in os.listdir(path="LOG")]
-	if logfolder_dirs == []:
-		newdir = 1
+	if sampleID == "":
+		if logfolder_dirs == []:
+			newdir = 1
+		else:
+			newdir = max(logfolder_dirs) + 1
 	else:
-		newdir = max(logfolder_dirs) + 1
+		newdir = int(sampleID)+int(seed)
 	print_and_run("mkdir -p LOG/"+str(newdir))
 
 	# Set environment for fpmc & run the simulation
+	datacard_tmp = datacard+"_tmp_"+seed+"_"+sampleID
+	lhe_filename=""
+	with open(datacard) as dc, open(datacard_tmp,"w") as dc_tmp:
+		for line in dc: 
+			if line.startswith("NRN1"):
+				dc_tmp.write("NRN1        {}\n".format(newdir))
+			elif line.startswith("LHEFILE"):
+				lhe_filename = line.split()[1]
+				lhe_filename = lhe_filename.replace(".lhe", "_"+seed+"_"+sampleID+".lhe").replace("'","")
+				dc_tmp.write("LHEFILE     \'"+lhe_filename+"\'\n")
+			else:
+				dc_tmp.write(line)
 	setenv_command = "cd "+CMSSW_folder+"src; eval `scramv1 runtime -sh`; cd -"
-	fpmc_command = "cd "+fpmc_build_folder+"; ./fpmc-lhe < "+work_folder+datacard+" | tee "+work_folder+"out_tmp; cd -"
+	fpmc_command = "cd "+fpmc_build_folder+"; ./fpmc-lhe < "+work_folder+datacard_tmp+" | tee "+work_folder+"out_tmp"+str(newdir)+"; cd -"
 	print("Executing: \n"+setenv_command+"\n"+fpmc_command)
 	if fpmc_output:
 		subprocess.call(setenv_command+";"+fpmc_command, shell=True)
@@ -56,10 +71,10 @@ def runFPMC(datacard ="", fpmc_output=True, LHE_output=False, ROOT_output=False,
 		subprocess.call(setenv_command+";"+fpmc_command, shell=True, stdout=subprocess.DEVNULL)
 
 	# Save summary in the log file
-	datacard_content = subprocess.getoutput("cat "+datacard)
+	datacard_content = subprocess.getoutput("cat "+datacard_tmp)
 	glu_nu = subprocess.getoutput("grep -m 1 'GLU_NU=' "+fpmc_source_folder+"/Fpmc/External/pdf/h1qcd.f | sed 's/d/e/'").lstrip()
 	glu_nu = glu_nu.replace("=","      ")
-	final_summary = subprocess.getoutput("tail --lines=1 out_tmp")
+	final_summary = subprocess.getoutput("tail --lines=1 out_tmp"+str(newdir))
 	summaryFileName = "LOG/"+str(newdir)+"/Summary.txt"
 	with open(summaryFileName, "w+") as summary_file:
 		summary_file.write("*******************************DATACARD*******************************\n")
@@ -70,13 +85,7 @@ def runFPMC(datacard ="", fpmc_output=True, LHE_output=False, ROOT_output=False,
 		summary_file.write(final_summary)
 		summary_file.write("\n**********************************************************************\n")
 
-	lhe_filename = ""
-	# Save the LHE file if needed
-	with open(datacard) as dc:
-		for line in dc: 
-			if line.startswith("LHEFILE"):
-				lhe_filename = line.split()[1]
-				lhe_filename = lhe_filename.replace("'", "")
+	os.remove(datacard_tmp)
 	if lhe_filename == "":
 		print("No LHE file name found in datacard!")
 		sys.exit(1)
@@ -111,7 +120,7 @@ def runFPMC(datacard ="", fpmc_output=True, LHE_output=False, ROOT_output=False,
 
 
 	# clean outputs
-	subprocess.call("rm out_tmp", shell=True)
+	subprocess.call("rm out_tmp"+str(newdir), shell=True)
 	print("Summary saved in: " + summaryFileName)
 
 

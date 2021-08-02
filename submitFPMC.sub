@@ -1,0 +1,12 @@
+executable			= runOnCondor.sh
+startID				= 210
+arguments			= Datacards/excl_anomTtbar_QED_XI6 True False False True $(ProcId) $(startID)
+output 				= condorLogs/excl_anomTtbar_QED_$(startID)_$(ProcId).out
+error 					= condorLogs/excl_anomTtbar_QED_$(startID)_$(ProcId).err
+log 					= condorLogs/excl_anomTtbar_QED_$(startID)_$(ProcId).log
+getenv					= True
++JobFlavour			= "longlunch"
+notify_user			= andrea.bellora@cern.ch
+notification		= Always
+
+queue 10

@@ -2,20 +2,20 @@
 import run_with_GLU_NU
 import os
 import sys
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
-measurements = 20
+measurements = 5
 glu_nu_min = -1
 glu_nu_max = 1
 
-def plot(glu_nus, cross_sections,title=""):
-	plt.plot(glu_nus,cross_sections)
-	plt.xlabel("GLU_NU")
-	plt.ylabel("Cross Section (pb)")
-	plt.title(title)
-	plt.show()
+# def plot(glu_nus, cross_sections,title=""):
+# 	plt.plot(glu_nus,cross_sections)
+# 	plt.xlabel("GLU_NU")
+# 	plt.ylabel("Cross Section (pb)")
+# 	plt.title(title)
+# 	plt.show()
 
-def run_GLU_NU_analysis(datacard):
+def run_GLU_NU_analysis(datacard = "", LHE_output=False, ROOT_output=False):
 	"""
 	This function simulates for a variety of 
 	"""
@@ -34,7 +34,7 @@ def run_GLU_NU_analysis(datacard):
 		glu_nu = glu_nu_min + i * (glu_nu_max - glu_nu_min) / (measurements-1)
 		print("*************************************************************")
 		print("Running simulation with GLU_NU = "+str(glu_nu))
-		run_with_GLU_NU.run_with_GLU_NU(datacard,glu_nu,False)
+		run_with_GLU_NU.run_with_GLU_NU(datacard,glu_nu, False, LHE_output, ROOT_output)
 		
 		# Compute the id of the i-th simulation and get the result from the summary
 		simId = first_simId + i
@@ -52,9 +52,11 @@ def run_GLU_NU_analysis(datacard):
 	print(glu_nus)
 	print(cross_sections)
 	process_name= os.path.splitext(os.path.basename(datacard))[0]
-	plot(glu_nus,cross_sections,process_name)
+	# plot(glu_nus,cross_sections,process_name)
+
+	print("Summaries saved with simIds: "+str(first_simId)+"..."+str(first_simId+measurements-1))
 
 
 
 if __name__ == "__main__":
-	run_GLU_NU_analysis(sys.argv[1])
+	run_GLU_NU_analysis(*sys.argv[1:])	
