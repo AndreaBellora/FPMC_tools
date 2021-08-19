@@ -91,7 +91,7 @@ def runFPMC(datacard ="", fpmc_output=True, LHE_output=False, ROOT_output=False,
 		sys.exit(1)
 
 	lhe_filepath = "LHE/"+str(newdir)+"/"+lhe_filename
-	root_filename = os.path.splitext(lhe_filename)[0]+".root"
+	root_filename = '_'.join(s.split(sep='_')[:-2])+".root"
 	root_filepath = "ROOT/"+str(newdir)+"/"+root_filename
 	delphes_filepath = "DELPHES/"+str(newdir)+"/"+root_filename
 
