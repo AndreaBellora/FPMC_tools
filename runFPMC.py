@@ -10,7 +10,7 @@ madgraph_folder = "/eos/home-a/abellora/SWAN_projects/TopPheno/MadGraph/MG5_aMC_
 delphes_datacard = "Delphes/cards/delphes_card_CMS.tcl"
 work_folder = os.getcwd()+"/"
 
-def runFPMC(datacard ="", fpmc_output=True, LHE_output=False, ROOT_output=False, Delphes_output=False,seed=42,sampleID=""):
+def runFPMC(datacard ="", fpmc_output=True, LHE_output=False, ROOT_output=False, Delphes_output=False,seed="42",sampleID=""):
 	if type(fpmc_output) == str:
 		if fpmc_output.lower() == "true":
 			fpmc_output = True

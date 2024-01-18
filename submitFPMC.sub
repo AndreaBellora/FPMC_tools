@@ -1,6 +1,6 @@
 executable			= runOnCondor.sh
-startID				= 210
-arguments			= Datacards/excl_anomTtbar_QED_XI6 True False False True $(ProcId) $(startID)
+startID				= 390
+arguments			= Datacards/excl_anomTtbar_QED_XI1 True False False True $(ProcId) $(startID)
 output 				= condorLogs/excl_anomTtbar_QED_$(startID)_$(ProcId).out
 error 					= condorLogs/excl_anomTtbar_QED_$(startID)_$(ProcId).err
 log 					= condorLogs/excl_anomTtbar_QED_$(startID)_$(ProcId).log
